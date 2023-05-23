@@ -32,7 +32,7 @@ start:
 		or al, al		; si c'est la fin de chaine
 		jz fin			; alors on quitte
 		
-		; ET sur le 6e bit : ça le met à 0 peu importe la casse, => minuscule
+		; ET sur le 6e bit
 		and al,0DFh ; 1101 1111
 		mov [esi],al ; on remplace le caractere
 
@@ -49,3 +49,4 @@ start:
 		mov eax, 0
 	    invoke	ExitProcess,eax
 end start
+ret
