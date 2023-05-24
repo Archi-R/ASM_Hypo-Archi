@@ -18,8 +18,8 @@ includelib c:\masm32\lib\msvcrt.lib
 ; variables initialisees
 mot db "acbabcbbabcbabcb",0
 
-nba db "nombre de a : %d", 0
-nbb db "nombre de b : %d", 0
+nba db "nombre de a : %d, ", 0
+nbb db "nombre de b : %d, ", 0
 nbc db "nombre de c : %d", 0
 
 .DATA?
@@ -39,10 +39,12 @@ countletters PROC
     mov ecx, 0
 
     mov esi, offset mot
-    mov edi, esi
 
 loop_start: 
-    mov al, byte ptr [edi]
+    mov al, [esi]
+    or al, al; si le zero flag est à 1, c'est la fin de chaine
+	jz loop_end			; alors on quitte
+
     cmp al, 'a'
     je increment_a
     cmp al, 'b'
@@ -50,28 +52,26 @@ loop_start:
     cmp al, 'c'
     je increment_c
 
-    inc edi ; on passe au caractère suivant
-    cmp byte ptr [edi], 0 ; on le compare avec 0 (fin de chaine)
-    jne loop_end ; si non on retourne au debut de la boucle
+    inc esi ; on passe au caractère suivla boucle
 
 loop_end:
     popad ; clear les registres
     pop ebp ; clear de ebp 
     ret ; return 
 
-increment_a: 
+increment_a:
     inc eax ; incrementation de a 
-    inc edi
+    inc esi
     jmp loop_start ; retour a la boucle principale
 
 increment_b: 
-    inc ebx 
-    inc edi
+    inc ebx
+    inc esi
     jmp loop_start
 
 increment_c:
-    inc ecx 
-    inc edi
+    inc ecx
+    inc esi
     jmp loop_start
 
 countletters ENDP
@@ -80,27 +80,18 @@ countletters ENDP
 start: 
 
     call countletters
-
-    mov eax, eax 
-    mov ebx, ebx 
-    mov ecx, ecx 
-
-
     ; affichage du nombre de a
     push eax
     push offset nba
-    call crt_printf
-    add esp, 8 ; nettoyage de la pile
+    invoke crt_printf
     ; affichage du nombre de b
     push ebx
     push offset nbb
-    call crt_printf
-    add esp, 8
+    invoke crt_printf
     ; affichage du nombre de c
     push ecx
     push offset nbc 
-    call crt_printf
-    add esp, 8
+    invoke crt_printf
 
     ; fin du programme
     push 0
