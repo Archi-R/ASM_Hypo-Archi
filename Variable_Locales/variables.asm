@@ -17,78 +17,66 @@ includelib c:\masm32\lib\msvcrt.lib
 .DATA
 ; variables initialisees
 resultmessage db "res = %d",0
-resultmessagev2 db "resV2 = %d",0
 
 .DATA?
 ; variables non-initialisees (bss)
 
 .CODE
-;code
-myst PROC
-    ; Prologue de la fonction
-    push ebp
-    mov ebp, esp
+    myst PROC
+        ; Prologue de la fonction
+        push ebp
+        mov ebp, esp
 
-    ; Déclaration des variables locales
-    pushad ; Sauvegarde des registres généraux
+        ; Déclaration des variables locales
+        pushad ; Sauvegarde des registres généraux
 
-    ; Variables locales
-    mov ecx, [ebp+8] ; Récupère la valeur de l'argument 'n'
-    add ecx, 1 ; on add 1 sinon on a un résultat au rand n-1
+        ; Variables locales
+        mov ecx, [ebp+8] ; Récupère la valeur de l'argument 'n'
+        add ecx, 1 ; on add 1 sinon on a un résultat au rand n-1
 
-    ; Initialisation des variables
-    mov eax, 1 ; j = 1
-    mov ebx, 1 ; k = 1
-    ; edx sera l
+        ; Initialisation des variables
+        mov eax, 1 ; j = 1
+        mov ebx, 1 ; k = 1
+        ; edx sera l
 
-    ; Boucle principale
-    mov esi, 3 ; i = 3
-    jmp loop_check ; Aller directement à la vérification de la boucle
+        ; Boucle principale
+        mov esi, 3 ; i = 3
+        jmp loop_start ; Aller directement à la vérification de la boucle
 
-loop_start:
-    ; Corps de la boucle
-    ;h  add eax, ebx ; l = j + k
-    ;h  mov ebx, eax ; j = k
-    ;h  mov eax, ebx ; k = l
+    loop_start:
+        mov edx, eax ; l = j
+        add edx, ebx ; l += k
+        mov eax, ebx ; j = k
+        mov ebx, edx ; k = l
 
-    mov edx, eax ; l = j
-    add edx, ebx ; l += k
-    mov eax, ebx ; j = k
-    mov ebx, edx ; k = l
+        ; Incrément de i
+        inc esi
 
-    ; Incrément de i
-    inc esi
-
-loop_check:
-    ; Vérification de la condition de boucle
-    cmp esi, ecx ; Compare i et n
-    jle loop_start ; Sauter à loop_start si i <= n
+    loop_check:
+        ; Vérification de la condition de boucle
+        cmp esi, ecx ; Compare i et n
+        jle loop_start ; Sauter à loop_start si i <= n
 
 
-    push eax
-    push offset resultmessage
-    call crt_printf
-    add esp, 8 ;si on nettoir pas, le popad prends du temps
-    ;call crt_getchar
+        push eax
+        push offset resultmessage
+        call crt_printf
+        add esp, 8 ;si on nettoir pas, le popad prends du temps
 
-    ; Retour de la fonction
-    popad ; Restauration des registres généraux ;
-    pop ebp
-    ret
+        ; Retour de la fonction
+        popad ; Restauration des registres généraux
+        pop ebp
+        ret
 
-myst ENDP
+    myst ENDP
 
-; Point d'entrée du programme principal
-start:
-    ; Appel de la fonction myst avec un argument
-    push 10
-    call myst
-    ; Récupération du résultat de la fonction depuis eax
-    ; et affichage du résultat
+    ; Point d'entrée du programme principal
+    start:
+        ; Appel de la fonction myst avec un argument
+        push 10
+        call myst
 
-    ; Suite du code principal
-
-    ; Fin du programme
-    push 0
-    call ExitProcess
-end start
+        ; Fin du programme
+        push 0
+        call ExitProcess
+    end start
