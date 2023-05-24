@@ -16,7 +16,7 @@ includelib c:\masm32\lib\msvcrt.lib
 
 .DATA
 ; variables initialisees
-format db "%d",0
+resultmessage db "res = %d",0
 
 .DATA?
 ; variables non-initialisees (bss)
