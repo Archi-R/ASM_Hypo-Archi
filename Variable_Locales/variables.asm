@@ -17,6 +17,7 @@ includelib c:\masm32\lib\msvcrt.lib
 .DATA
 ; variables initialisees
 resultmessage db "res = %d",0
+resultmessagev2 db "resV2 = %d",0
 
 .DATA?
 ; variables non-initialisees (bss)
@@ -33,6 +34,7 @@ myst PROC
 
     ; Variables locales
     mov ecx, [ebp+8] ; Récupère la valeur de l'argument 'n'
+    add ecx, 1 ; on add 1 sinon on a un résultat au rand n-1
 
     ; Initialisation des variables
     mov eax, 1 ; j = 1
@@ -66,10 +68,11 @@ loop_check:
     push eax
     push offset resultmessage
     call crt_printf
-    call crt_getchar
+    add esp, 8 ;si on nettoir pas, le popad prends du temps
+    ;call crt_getchar
 
     ; Retour de la fonction
-    popad ; Restauration des registres généraux
+    popad ; Restauration des registres généraux ;
     pop ebp
     ret
 
@@ -82,11 +85,6 @@ start:
     call myst
     ; Récupération du résultat de la fonction depuis eax
     ; et affichage du résultat
-    push ebx
-    push offset format
-    call crt_printf
-    add esp, 8
-
 
     ; Suite du code principal
 
