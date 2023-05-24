@@ -52,7 +52,7 @@ loop_start:
 
     inc edi ; on passe au caractère suivant
     cmp byte ptr [edi], 0 ; on le compare avec 0 (fin de chaine)
-    jne loop_start ; si non on retourne au debut de la boucle
+    jne loop_end ; si non on retourne au debut de la boucle
 
 loop_end:
     popad ; clear les registres
@@ -61,14 +61,17 @@ loop_end:
 
 increment_a: 
     inc eax ; incrementation de a 
+    inc edi
     jmp loop_start ; retour a la boucle principale
 
 increment_b: 
     inc ebx 
+    inc edi
     jmp loop_start
 
 increment_c:
     inc ecx 
+    inc edi
     jmp loop_start
 
 countletters ENDP
