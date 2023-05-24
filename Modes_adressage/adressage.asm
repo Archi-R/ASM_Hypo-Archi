@@ -16,7 +16,7 @@ includelib c:\masm32\lib\msvcrt.lib
 
 .DATA
 ; variables initialisees
-Phrase     db    "phrasewENwmaj",10,0
+Phrase     db    "ptn ca marche",10,0
 strCommand db "Pause",13,10,0 ; on va garder ça c'est pas une bete idée
 
 .DATA?
@@ -24,29 +24,38 @@ strCommand db "Pause",13,10,0 ; on va garder ça c'est pas une bete idée
 
 .CODE
 start:
-	; itérer sur une string
+	push offset Phrase ; on donne la le l'adresse de la cheu-chaine
 	mov esi, offset Phrase
-	; boucle
-	boucle:
-		mov al, [esi] 		; on charge le caractere courant
-		or al, al		; si c'est la fin de chaine
-		jz fin			; alors on quitte
-		
-		; ET sur le 6e bit
-		and al,0DFh ; 1101 1111
-		mov [esi],al ; on remplace le caractere
-
-		inc esi ; passer au caractère suivant
-		jnz boucle
 	
-	fin:
-		; On place l'argument de la fonction appelée sur la pile
-        push offset Phrase
-        ; call printf
-        call crt_printf
+	call metsEnMajuscule ;appel sous programme
+	
+	invoke crt_system, offset strCommand
+	mov eax, 0
+	invoke	ExitProcess,eax
 
-		invoke crt_system, offset strCommand
-		mov eax, 0
-	    invoke	ExitProcess,eax
+	metsEnMajuscule proc
+		mov esi, [esp+4] ; on recupere l'adresse de la chaine qui se trouve sur la pile
+		boucle:
+			mov al, [esi] 		; on charge le caractere courant
+			or al, al		; si le zero flag est à 1, c'est la fin de chaine
+			jz fin			; alors on quitte
+
+			cmp al, ' ' ; si c'est un espace
+			je espace
+			
+			; ET sur le 6e bit : ça le met à 0 peu importe la casse, => minuscule
+			and al,0DFh ; 1101 1111
+			mov [esi],al ; on remplace le caractere
+
+			inc esi ; passer au caractère suivant
+			jnz boucle
+		
+		espace:
+			inc esi ; passer au caractère suivant
+			jnz boucle 
+		fin:
+			invoke crt_printf, offset Phrase
+
+	metsEnMajuscule endp
+
 end start
-ret

@@ -16,6 +16,7 @@ includelib c:\masm32\lib\msvcrt.lib
 
 .DATA
 ; variables initialisees
+format db "%d",0
 
 .DATA?
 ; variables non-initialisees (bss)
@@ -36,6 +37,7 @@ myst PROC
     ; Initialisation des variables
     mov eax, 1 ; j = 1
     mov ebx, 1 ; k = 1
+    ; edx sera l
 
     ; Boucle principale
     mov esi, 3 ; i = 3
@@ -43,9 +45,14 @@ myst PROC
 
 loop_start:
     ; Corps de la boucle
-    add eax, ebx ; l = j + k
-    mov ebx, eax ; j = k
-    mov eax, ebx ; k = l
+    ;h  add eax, ebx ; l = j + k
+    ;h  mov ebx, eax ; j = k
+    ;h  mov eax, ebx ; k = l
+
+    mov edx, eax ; l = j
+    add edx, ebx ; l += k
+    mov eax, ebx ; j = k
+    mov ebx, edx ; k = l
 
     ; Incrément de i
     inc esi
@@ -66,9 +73,14 @@ myst ENDP
 ; Point d'entrée du programme principal
 start:
     ; Appel de la fonction myst avec un argument
-    push 10 ; Exemple d'appel avec n = 10
+    push 5 ; Exemple d'appel avec n = 10
     call myst
     ; Récupération du résultat de la fonction depuis eax
+    ; et affichage du résultat
+    push ebx
+    push offset format
+    call crt_printf
+    add esp, 8 
 
     ; Suite du code principal
 
