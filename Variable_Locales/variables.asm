@@ -27,7 +27,7 @@ myst PROC
     ; Prologue de la fonction
     push ebp
     mov ebp, esp
-    
+
     ; Déclaration des variables locales
     pushad ; Sauvegarde des registres généraux
 
@@ -62,8 +62,13 @@ loop_check:
     cmp esi, ecx ; Compare i et n
     jle loop_start ; Sauter à loop_start si i <= n
 
+
+    push eax
+    push offset resultmessage
+    call crt_printf
+    call crt_getchar
+
     ; Retour de la fonction
-    mov eax, ebx ; Résultat dans eax (k)
     popad ; Restauration des registres généraux
     pop ebp
     ret
@@ -73,14 +78,15 @@ myst ENDP
 ; Point d'entrée du programme principal
 start:
     ; Appel de la fonction myst avec un argument
-    push 5 ; Exemple d'appel avec n = 10
+    push 10
     call myst
     ; Récupération du résultat de la fonction depuis eax
     ; et affichage du résultat
     push ebx
     push offset format
     call crt_printf
-    add esp, 8 
+    add esp, 8
+
 
     ; Suite du code principal
 
