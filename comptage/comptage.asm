@@ -16,11 +16,9 @@ includelib c:\masm32\lib\msvcrt.lib
 
 .DATA
 ; variables initialisees
-mot db "cbabaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaacca",0
+mot db "abracadabarbarbabararafat",0
 
-nba db "nombre de a : %d",10,0
-nbb db "nombre de b : %d",10,0
-nbc db "nombre de c : %d",10,0
+phrase db "nombre de a : %d, nombre de b : %d, nombre de c : %d",10,0
 
 .DATA?
 ; variables non-initialisees (bss)
@@ -33,15 +31,19 @@ countletters PROC
     mov ebp, esp
     pushad
 
-    ; initialisation des 3 compteurs :
-    mov ebx, 0  ; Compteur pour 'a'
-    mov esi, 0  ; Compteur pour 'b'
-    mov edi, 0  ; Compteur pour 'c'
+    ; Maintenant il faut utiliser
+    ;[ebp-4], [ebp-8], [ebp-12] comme variables locales
 
-    mov ecx, [ebp+8] ; on met le pointeur sur le mot dans eax
+    ; initialisation des 3 compteurs à 0
+    mov eax, 0
+    MOV DWORD PTR [ebp-4], 0
+    MOV DWORD PTR [ebp-8], 0
+    MOV DWORD PTR [ebp-12], 0
+
+    mov esi, [ebp+8] ; on met le pointeur sur le mot dans eax
 
 loop_start: 
-    mov al, [ecx]
+    mov al, [esi]
     or al, al ; vérifie si al est égal à la fin de la chaîne
 	jz loop_end			; si oui, alors on quitte
     
@@ -52,57 +54,65 @@ loop_start:
     cmp al, 'c'
     je increment_c
 
-    inc ecx ; on passe au caractère suivla boucle
+    inc esi ; on passe au caractère suivant
+    jmp loop_start ; retour a la boucle principale
 
 loop_end:
-    
-     ; affichage du nombre de a
-    push ebx
-    push offset nba
-    call crt_printf
-    add esp, 8
-    ; affichage du nombre de b
-    push esi
-    push offset nbb
-    call crt_printf
-    add esp, 8
-    ; affichage du nombre de c
-    push edi
-    push offset nbc 
-    call crt_printf
-    add esp, 8
-
     popad ; clear les registres
+    mov eax, [ebp-4] ; on met le nombre de a dans eax
+    mov ebx, [ebp-8] ; on met le nombre de b dans ebx
+    mov ecx, [ebp-12] ; on met le nombre de c dans esi
+    
     pop ebp ; clear de ebp 
+    
     ret ; return
 
 increment_a:
 
-    inc ebx ; incrementation de a 
-    inc ecx
+    mov eax, [ebp-4] ; charger la valeur de ebp-4 dans eax
+    inc eax ; incrementer eax
+    mov [ebp-4], eax ; stocker la nouvelle valeur de eax à ebp-4
+    inc esi
     jmp loop_start ; retour a la boucle principale
 
 increment_b:
 
+    mov eax, [ebp-8] ; charger la valeur de ebp-8 dans ebx
+    inc eax ; incrementer ebx
+    mov [ebp-8], eax ; stocker la nouvelle valeur de ebx à ebp-8
     inc esi
-    inc ecx
     jmp loop_start
 
 increment_c:
 
-    inc edi
-    inc ecx
+    mov eax, [ebp-12] ; charger la valeur de ebp-12 dans ecx
+    inc eax ; incrementer ecx
+    mov [ebp-12], eax ; stocker la nouvelle valeur de ecx à ebp-12
+    inc esi
     jmp loop_start
 
 countletters ENDP
 
 
-start: 
+start:
+    ; Créer de l'espace pour les variables locales
+    sub esp, 12     ; Crée 12 octets d'espace (3 variables de 4 octets)
+
+    ; Maintenant il faut utiliser
+    ;[ebp-4], [ebp-8], [ebp-12] comme variables locales
+
     push offset mot
 
     call countletters
    
-    ; fin du programme
+    ; affichage du nombre de a, b et c
+    push ecx
+    push ebx
+    push eax
+    push offset phrase
+    call crt_printf
+    add esp, 16
+
     push 0
     call ExitProcess
 

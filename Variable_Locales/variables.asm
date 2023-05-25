@@ -22,7 +22,7 @@ resultmessage db "res = %d",0
 ; variables non-initialisees (bss)
 
 .CODE
-    myst PROC
+    fibonachos PROC
         ; Prologue de la fonction
         push ebp
         mov ebp, esp
@@ -68,13 +68,13 @@ resultmessage db "res = %d",0
         pop ebp
         ret
 
-    myst ENDP
+    fibonachos ENDP
 
     ; Point d'entrée du programme principal
     start:
-        ; Appel de la fonction myst avec un argument
+        ; Appel de la fonction fibonachos avec un argument
         push 10
-        call myst
+        call fibonachos
 
         ; Fin du programme
         push 0

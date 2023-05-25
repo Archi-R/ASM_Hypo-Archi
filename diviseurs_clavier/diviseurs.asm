@@ -16,62 +16,78 @@ includelib c:\masm32\lib\msvcrt.lib
 
 .DATA
 ; variables initialisees
-
-
-.DATA?
-; variables non-initialisees (bss)
+format_int db "%d", 0
+number dd 0 ; créer un endroit pour stocker le nombre
+phrase_formatee db "%d|", 0
 
 .CODE
-;code
 
-diviseur PROC
+divitacos PROC
     push ebp
     mov ebp, esp
     pushad
 
-    mov ecx, [ebp+8] ; on met le pointeur sur le nombre dans ecx
-    ; save de eax
-    push eax
-    mov eax, 0
+    mov eax, [ebp+8] ; obtenir le nombre à tester
+    mov ecx, eax ; mettre le nombre dans ecx
+    mov ebx, 1 ;
     loop_increment:
+    ; vérifier si eax heurte la limite
+        cmp ebx, ecx
+        jg fin_increment ; si oui, sortir de la boucle
+        
+        ; diviser le nombre par ebx
+        
+        push eax ; on save la valeur de eax
+        ; dividente déjà dans eax MOV EAX, dividend ; mettez le dividende dans EAX
+        ;diviseur déjà dans ECX MOV ECX, [ebp-8] ; mettez le diviseur dans ECX
+        XOR EDX, EDX ; videz EDX (nécessaire car DIV divise le nombre 64 bits dans EDX:EAX par le diviseur)
+        DIV ebx ; divisez EAX par EbX, le quotient est stocké dans EAX, le reste dans EDX
 
+        ; vérifier si le reste est nul
+        cmp edx, 0
+        jnz non_divisible ; si le reste est non nul, le nombre n'est pas divisible
+        
+        push ebx
+        push offset phrase_formatee
+        call crt_printf
+        add esp, 8 ; sinon, le nombre est divisible
+
+        pop eax ; restauration de eax (le dividende)
+        inc ebx ; incrémente du diviseur
+
+        jmp loop_increment ; recommencer la boucle
     
-    MOV EAX, dividend ; mettez le dividende dans EAX
-    MOV ECX, divisor ; mettez le diviseur dans ECX
-    XOR EDX, EDX ; videz EDX (nécessaire car DIV divise le nombre 64 bits dans EDX:EAX par le diviseur)
-    DIV ECX ; divisez EAX par ECX, le quotient est stocké dans EAX, le reste dans EDX
-
-
-    ;restauration de eax
-    pop eax
-    
-
-    est_divisible:
-
     non_divisible:
+        pop eax ; restauration de eax (le dividende)
+        inc ebx ; incrémente du diviseur
 
-diviseur ENDP
+        jmp loop_increment ; recommencer la boucle
 
+    fin_increment:
+        popad
+        mov esp, ebp
+        pop ebp
+        ret
+
+divitacos ENDP
 
 start: 
-    
-    ; obtenir un handle sur l'entrée standard
-    push -10 ; STD_INPUT_HANDLE
-    call GetStdHandle
-    mov ebx, eax ; sauvegarde le handle dans ebx
+    ; lire le nombre de l'utilisateur
+    lea eax, [number] ; obtenir l'adresse de 'number'
+    push eax ; push l'adresse de 'number'
+    push offset format_int
+    call crt_scanf ; appelle scanf
+    add esp, 8 ; nettoie la pile
 
-    ; appelle ReadConsoleA pour lire l'entrée de l'utilisateur
-    push 0 ; lpNumberOfCharsRead, inutile ici
-    push 256 ; nNumberOfCharsToRead, taille du buffer
-    push offset buffer ; lpBuffer, pointe vers notre buffer
-    push ebx ; hConsoleInput, handle sur l'entrée standard
-    call ReadConsoleA
+    sub esp, 12     ; Crée 12 octets d'espace (3 variables de 4 octets)
 
-    ; ... ici vous pouvez manipuler les données entrées par l'utilisateur dans 'buffer'
+    ; afficher le nombre
+    mov eax, [number] ; obtenir le nombre stocké
+    push eax ; push le nombre
+    call divitacos ; appelle divitacos
+    add esp, 8 ; nettoie la pile
 
     ; terminer le programme
-
-
     push 0
     call ExitProcess
 end start
