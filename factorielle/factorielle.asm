@@ -20,8 +20,6 @@ includelib c:\masm32\lib\msvcrt.lib
     message db "le resultat est : %d ",0
     number dd 0
 
-    buffer db 256 DUP(0) ; buffer de lecture
-
 .DATA?
 
 .CODE
