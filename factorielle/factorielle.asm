@@ -26,48 +26,34 @@ includelib c:\masm32\lib\msvcrt.lib
 
 .CODE
 
-factojitas PROC ;code de la fonction factorielle
-    push ebp
-    mov ebp, esp
-    pushad
 
-    mov ecx , number
-    mov eax, 0
-    mov dword ptr [ebp-4], 0
+factojitas: 
+    push ebp ; sauvegarder la base de la pile
+    mov ebp, esp ; établir un nouveau cadre de pile
 
-    mov [ebp-4], ecx; on sauvegarde la première valeur dans
-                    ; notre variable locale
-    mov [ebp-8], ecx; premier resultat
-    je boucle       ; puis on atteri dans la boucle récursive 
-
-    boucle: ; recurssif
-
-    mov ecx, [ebp-4] ; passe l'iterateur dans ecx 
-    dec ecx          ; on le décrémente
-    cmp ecx, 1       ; s'il vaut 1 
-    je end_loop      ; on se dirige vers la fin du programme
     
-    mov eax, [ebp-8] ; sinon on prends le dernier resultat
-    imul eax, ecx    ; on le multiplie avec l'iterateur
-    mov [ebp-8], eax ; on recupère les valeurs
-    mov [ebp-4], ecx
-    jmp boucle       ; on repasse dans la boucle
+    mov ecx, [ebp+8] ; recup de  l'arg
+    cmp ecx, 1
+    je cas_de_base ; si égal à 1, c'est le cas de base
     
-    end_loop: 
-    popad
-    mov eax, [ebp-4]    ; on sauvegarde le résultat dans eax
+    dec ecx ; on décrémente le nombre
+    push ecx ; YEET ecx sur la pile
+    call factojitas ; et c'est reparti pour un tour
+    inc ecx ; on readd 1 à ecx car on l'a dec juste au dessus pour piler les appels
+    mul ecx ; on fait enfin l'opération qui finit sur eax
 
-    pop ebp           ; clear de ebp
-    ret 
+    jmp fin
 
-factojitas ENDP ; fin de factojitas
+    cas_de_base:
+        mov eax, 1 ; on met 1 dans eax (quyi sera appelé par les appels plus profonds
 
+    fin:
+        mov esp, ebp ; nettoyer la pile
+        pop ebp ; restaurer la base de la pile
+        ret 4 ; nettoyer l'argument de la pile et retourner
 start: 
 
-    sub esp, 8 ; crée 8 octets d'espace pour stocker la valeur
-               ; a calculer et le resultat
-
-lea eax, [number] ; obtenir l'adresse de 'number'
+    lea eax, [number] ; obtenir l'adresse de 'number'
     push eax ; push l'adresse de 'number'
     push offset format_int
     call crt_scanf ; appelle scanf
