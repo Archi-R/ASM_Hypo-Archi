@@ -25,6 +25,8 @@ includelib c:\masm32\lib\msvcrt.lib
     dot db ".", 0
     dotdot db "..", 0
 
+
+
 .DATA?
 ; variables non-initialisees (bss)
 
@@ -74,10 +76,14 @@ our_dir:
         call our_strcat
         add esp, 8
 
-        push eax ; on met le path sur la pile
-        call our_dir ; et c'est reparti pour un tour
-            
+        push eax
+        push 0h
+        call our_strcat
+        add esp, 8
 
+        push eax ; on met le path sur la pile
+        call r_dir ; et c'est reparti pour un tour
+            
     fin:
         ; Close the search handle
         invoke FindClose, searchHandle
@@ -89,6 +95,33 @@ our_dir:
         invoke ExitProcess, 0
 
 ; Routine strcat en assembly
+
+r_dir:
+    ; Find the first file
+    invoke FindFirstFile, addr szPath, addr findData
+    invoke FindNextFile, searchHandle, addr findData ; on passe . et ..
+    mov searchHandle, eax
+    
+    ; Loop through all files
+    boucle:
+        ; Print file name
+        invoke crt_printf, addr formatString, addr findData.cFileName
+        ; Find the next file
+        invoke FindNextFile, searchHandle, addr findData
+        ;si on trouve un dossier on appelle la fonction
+        test findData.dwFileAttributes, FILE_ATTRIBUTE_DIRECTORY
+        jnz ItsADirectory ; la fin call our_dir
+
+
+        cmp eax, 0;si ya plus de fichier
+        jne boucle
+
+    ; Close the search handle
+    invoke FindClose, searchHandle
+
+
+
+
 our_strcat:
     ; Sauvegarder les registres que nous allons utiliser
     push esi
@@ -121,7 +154,7 @@ our_strcat:
 
 start:
     push offset szPath
-    call our_dir
+    call r_dir
 
     invoke ExitProcess, 0
 
