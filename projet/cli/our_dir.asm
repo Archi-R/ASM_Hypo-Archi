@@ -18,136 +18,124 @@ includelib c:\masm32\lib\msvcrt.lib
 ; variables initialisees
     searchHandle dd 0
     findData WIN32_FIND_DATA <>
-    szPath     db    "F:\Images\*",0
+    szPath     db    'F:\Images\*',0
     phTest  db    "AAAAA",10,0
     formatString db "%s",10,0
-    fullPath db "F:\Images\*",0
-    dot db ".", 0
-    dotdot db "..", 0
-	strCommand db "Pause",13,10,0
+    fullPath db 1024 dup(0)
+    antislash db "\*", 0
+
 
 
 .DATA?
 ; variables non-initialisees (bss)
 
 .CODE
-our_dir: 
-    push ebp ; sauvegarder la base de la pile
-    mov ebp, esp ; établir un nouveau cadre de pile
-
+ItsADirectory:
+    ; Sauvegarder ebp et établir un nouveau cadre de pile
     
+    push ebp
+    mov ebp, esp
+    ;push esi
+    ;le probleme c'est que c'est pas un call propre y'a
+    ;pas d'adresse de retour propre
+    ; Récupérer l'argument depuis la pile
+    mov eax, [ebp+8] ;currently ca vise pas le bon truc
+
+
+    push offset findData.cFileName ; YEET nom du dossier courant
+    push eax ; YEET sur la pile
+    call our_strcat ; fuuuuUUUUUUSIUOONNNNN (oe la ref DBZ tavu)
+    add esp, 8 ; nettoyage de la pile car on est les boniches de l'assembleur
+    ; et on recommence avec le \*
+
+
+    push offset antislash
+    push eax
+    call our_strcat
+    add esp, 8
+
+    push eax ; on met le path sur la pile
+    call r_dir ; et c'est reparti pour un tour
+    ; Restaurer le cadre de pile précédent
+    mov esp, ebp
+    pop ebp
+
+    ; Retourner
+    ret 4
+
+r_dir:
+    push ebp ; sauvegarder la base de la pile
+    mov ebp, esp ; établir un nouveau cadre de pile    
     mov ecx, [ebp+8] ; recup de  l'arg
     
     ; Find the first file
     invoke FindFirstFile, ecx, addr findData
     mov searchHandle, eax
-    ; Print file name
-    invoke FindNextFile, searchHandle, addr findData
-    invoke FindNextFile, searchHandle, addr findData
-	cmp eax, 0
-	je fin
-	
-	
-    test findData.dwFileAttributes, FILE_ATTRIBUTE_DIRECTORY
-    jnz ItsADirectory ; si c'est un dossier on appelle la fonction d
-    ;si le dossier n'est pas . ou .. on affiche le nom du fichier
-    ; sinon on affiche le nom du fichier
-    invoke crt_printf, addr formatString, addr findData.cFileName
-    
-        
-    our_next_file:
-        invoke FindNextFile, searchHandle, addr findData
-        cmp eax, 0
-		jne testDirectory
-        ; sinon c'est ciao    
-        jmp fin
-		
-	testDirectory:
-		test findData.dwFileAttributes, FILE_ATTRIBUTE_DIRECTORY
-		jnz ItsADirectory ; si c'est un dossier on appelle la fonction d
-		jmp our_next_file
-
+    invoke FindNextFile, searchHandle, addr findData ; on passe . et ..
 
     
-    ItsADirectory:
-        ; Or you could append "\*" to the directory name and start a new FindFirstFile/FindNextFile loop to list its contents
+    ; Loop through all files
+    boucle:
+        invoke FindNextFile, searchHandle, addr findData ; 2e next pour chopper le premier fichier
+        ; Print file name
+        invoke crt_printf, addr formatString, addr findData.cFileName
         
-        ;jmp our_dir currPath ;ou autre avec en input le path du nouveau dossier 
-        ;currPath : le chemin que l'on veut explorer
-        mov byte ptr [fullPath + 1023], 0 ; on met le dernier byte a 0
-        lea eax, fullPath ; on recup le path
-        push eax ; YEET sur la pile
-        push offset findData.cFileName ; on met le nom du dossier sur la pile
-        call our_strcat ; fuuuuUUUUUUSIUOONNNNN (oe la ref DBZ tavu)
         
+        ;si on trouve un dossier on appelle la fonction
+        test findData.dwFileAttributes, FILE_ATTRIBUTE_DIRECTORY
+        ;mettre sur la pile le path
+        jnz dir_founded ; la fin call our_dir
 
-        ; et on recommence avec le \*
+        cmp eax, 0;si ya plus de fichier
+        jne boucle
+
+        dir_founded:
+            ; mise du path dans eax
+            mov eax, [ebp+8]
+            push eax ; on met le path sur la pile
+            call ItsADirectory
         
-        push "\\*"
-        call our_strcat
-        mov eax, esp ; on recup le path
+    ; Close the search handle
+    invoke FindClose, searchHandle
 
-        push eax ; on met le path sur la pile
-        call our_dir ; et c'est reparti pour un tour
-            
 
-    fin:
-        ; Close the search handle
-        invoke FindClose, searchHandle
 
-        mov esp, ebp ; nettoyer la pile
-        pop ebp ; restaurer la base de la pile
-        ret 4 ; nettoyer l'argument de la pile et retourner
-
-        invoke ExitProcess, 0
-
-; Routine strcat en assembly
 our_strcat:
-    push ebp              ; Save the base pointer
-    mov ebp, esp          ; Set up a new stack frame
+    ; Sauvegarder les registres que nous allons utiliser
+    push esi
+    push edi
 
-    ; Retrieve the source and destination strings from the stack
-    mov esi, [ebp+8]      ; source (string to be added)
-    mov edi, [ebp+12]     ; destination (string to be modified)
+    ; Prendre les deux chaînes à partir de la pile
+    mov esi, [esp + 12]  ; source (chaîne à ajouter)
+    mov edi, [esp + 16]  ; destination (chaîne à modifier)
+    ; print les parametres
 
-    ; Find the end of the destination string
-    mov ecx, edi
-    xor al, al            ; Set AL to null byte (0x00)
-    repne scasb           ; Search for the null byte in the destination string
-    dec edi               ; Decrement edi to point to the null byte
+     ; Trouver le caractère de fin (0x00) dans la destination
+    mov ecx, 800h
+    xor eax, eax
+    cld
+    repne scasb
+    dec edi
 
-    ; Copy the source string to the end of the destination string
-    call count            ; load the lenght of esi into ecx
-    mov esi, [ebp+8]      ; Reset esi to point to the source string
-    xor al, al            ; Set AL to null byte (0x00)
-    rep movsb             ; Copy the source string to the destination string // movsb boucle un nombre de fois égal a la valeur de ecx !
+    ; Copier la source à la fin de la destination
+    mov ecx, 800h  ; Reset ecx before searching for the end of source string
+    repne scasb
+    not ecx
+    dec ecx
+    mov esi, [esp + 12]
+    rep movsb
 
-    pop ebp               ; Restore the base pointer
-    ret                   ; Return from the function
+    ; Restaurer les registres et quitter
+    pop edi
+    pop esi
+    ; print le resultat
 
+    ret 8
 
-count: 
-    mov ecx,0 ; initialisation du compteur
-
-    loop_start: 
-        mov al, [esi] ; charge la valeur de esi dans al
-        cmp al, 0
-        je loop_end
-
-        inc ecx
-        inc esi
-        jmp loop_start
-
-    loop_end: 
-        ; on ne fait rien puisque la valeur du compteur est dans le regisre ecx
-        ret
 start:
-    
     push offset szPath
-    call our_dir
-	invoke crt_system, offset strCommand
+    call r_dir
 
     invoke ExitProcess, 0
-
 
 end start
